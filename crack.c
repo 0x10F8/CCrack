@@ -90,7 +90,7 @@ int testMD5(Permutations *permutations, char* expected) {
 }
 
 Permutations* makePermutations(unsigned char* charset, unsigned short maxLength, unsigned short currentLength) {
-    Permutations* p = malloc(sizeof(Permutations)+maxLength*sizeof(unsigned short));
+    Permutations* p = malloc(sizeof(Permutations)+currentLength*sizeof(unsigned short));
     p->charset = charset;
     p->currentString = malloc(sizeof(unsigned char) * currentLength);
     p->charsetLength = strlen(p->charset);
