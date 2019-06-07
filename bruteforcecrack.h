@@ -1,0 +1,1 @@
+int crackHashByCharset(unsigned char *charset, unsigned short maxLength, int (*testFunc)(char *, unsigned short, char *), char *expected);

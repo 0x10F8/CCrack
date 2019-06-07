@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "permutations.h"
 #include "hashtypes.h"
+#include "wordlistcrack.h"
+#include "bruteforcecrack.h"
 
 /* 
  * Memory efficent generic hash cracking tool.
@@ -15,65 +16,65 @@
  * 
  */
 
-int main(int argc, char *argv[])
+#define BRUTEFORCE "bruteforce"
+#define DICTIONARY "dictionary"
+
+typedef int (*testFunc)(char *, unsigned short, char *);
+int printUsage();
+testFunc getTestFunction(char *hashType);
+
+int printUsage()
 {
-    // Expected arguments ./crack <charset> <maxlength> <hashtype> <expectedhash>
-    if (argc != 5)
-    {
-        printf("usage: ./crack <charset> <maxlength> <hashtype> <expectedhash>\n");
-        return 1;
-    }
+    printf("usage:  ./crack [bruteforce | dictionary] [options] [hash]\n");
+    printf("        ./crack bruteforce <charset> <maxlength> <hashtype> <expectedhash>\n");
+    printf("        ./crack dictionary <wordlist> <hashtype> <expectedhash>\n");
+    return 1;
+}
 
-    // Gather arguments
-    unsigned char *charset = argv[1];
-    unsigned short maxLength = atoi(argv[2]);
-    unsigned char *hashType = argv[3];
-    unsigned char *expected = argv[4];
-    int (*testFunc)(char *, unsigned short, char *);
-
+testFunc getTestFunction(char *hashType)
+{
+    testFunc function;
     // Setup the test function depending on the hashtype required
     if (strcmp(hashType, "md5") == 0)
     {
-        testFunc = &testMD5;
+        function = &testMD5;
     }
     else if (strcmp(hashType, "sha1") == 0)
     {
-        testFunc = &testSHA1;
+        function = &testSHA1;
     }
     else
     {
         printf("Unknown hashtype %s\n", hashType);
+        perror(hashType);
     }
-    // Build the first permutations (length 1)
-    Permutations *permutations = makePermutations(charset, maxLength, 1);
+    return function;
+}
 
-    int found = 0;
+int main(int argc, char *argv[])
+{
 
-    // Begin crack loop
-    while (hasNext(permutations) && !found)
+    if (argc > 2 && (strcmp(BRUTEFORCE, argv[1]) == 0 || strcmp(DICTIONARY, argv[1]) == 0))
     {
-
-        // If the test function found a match then we're done
-        if (testFunc(permutations->currentString, permutations->currentLength, expected))
+        if (strcmp(BRUTEFORCE, argv[1]) == 0 && argc == 6)
         {
-            printf("Found: %s (%s)\n", permutations->currentString, expected);
-            found++;
+            // Gather arguments
+            unsigned char *charset = argv[2];
+            unsigned short maxLength = atoi(argv[3]);
+            unsigned char *hashType = argv[4];
+            unsigned char *expected = argv[5];
+            testFunc function = getTestFunction(hashType);
+            return crackHashByCharset(charset, maxLength, function, expected);
         }
-        // If we reached the maximum indexes for this current length then increment the length
-        if (isMaxIndexes(permutations))
+        if (strcmp(DICTIONARY, argv[1]) == 0 && argc == 5)
         {
-            // Increment length, free the current struct and build a new one
-            unsigned short currentLength = permutations->currentLength + 1;
-            free(permutations);
-            permutations = makePermutations(charset, maxLength, currentLength);
+            // Gather arguments
+            unsigned char *wordList = argv[2];
+            unsigned char *hashType = argv[3];
+            unsigned char *expected = argv[4];
+            testFunc function = getTestFunction(hashType);
+            return crackHashByWordList(wordList, function, expected);
         }
-        else
-        {
-            // If we didn't reach the max indexes for this length then just increment the indexes by 1
-            incrementIndexes(permutations);
-        }
-        // Calculate the next current string for these indexes
-        next(permutations);
     }
-    return 0;
+    return printUsage();
 }

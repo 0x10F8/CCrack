@@ -1,0 +1,1 @@
+int crackHashByWordList(char *wordlistFileName, int (*testFunc)(char *, unsigned short, char *), char *expected);
