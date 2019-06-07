@@ -1,0 +1,1 @@
+int testMD5(char *text, unsigned short length, char *expected);
