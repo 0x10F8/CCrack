@@ -36,6 +36,10 @@ int main(int argc, char *argv[])
     {
         testFunc = &testMD5;
     }
+    else if (strcmp(hashType, "sha1") == 0)
+    {
+        testFunc = &testSHA1;
+    }
     else
     {
         printf("Unknown hashtype %s\n", hashType);
